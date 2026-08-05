@@ -1,36 +1,6 @@
-# GRASPAW
-
-A robot arm on a boat that picks trash out of the water.
-
-This was my M.Tech thesis at IIT Hyderabad (2025–2026), supervised by Prof. R. Prashant Kumar. I built the whole thing — the boat, the arm, the vision, the software — and then took it outside and found out what actually breaks.
-
-📹 **[Watch it pick up an object and place it](https://drive.google.com/file/d/19y88qOxWlNAnvGD7hjhhpgPssVoBzQ9n/view?usp=sharing)**
-
----
-
-## Why bother
-
-Most low-cost cleanup boats drag a net or a conveyor and scoop up whatever floats into them. That works, but it's indiscriminate — you collect everything, including things you'd rather not.
-
-I wanted the boat to *choose*: see a specific object, reach out, and pick that one up. Which sounds like a small change and isn't, because now perception has to talk to a manipulator sitting on a platform that won't hold still.
-
----
-
-## How it's put together
-
-```
-USB camera ──► find the object (OpenCV) ──► where is it?
-                                                │
-                                                ▼
-                                    work out the joint angles
-                                                │
-                                                ▼
-                    send to servos ──► 5-DOF arm ──► grab it, drop it in the bin
-```
-
 - **Boat:** PVC hull, two brushless thrusters, differential steering, driven over WiFi from an ESP32
-- **Arm:** 3D-printed, 5 degrees of freedom plus a gripper, Feetech STS3215 smart servos on a serial bus
-- **Brain:** Raspberry Pi onboard, talking to the servos at 1 Mbaud over half-duplex serial
+- **Arm:** 3D-printed, four arm joints plus a gripper (five STS3215 smart servos on one serial bus)
+- **Brain:** Raspberry Pi onboard running the vision and interpolation, sending joint targets over USB serial to a microcontroller that drives the Feetech half-duplex bus
 
 ---
 
@@ -38,7 +8,7 @@ USB camera ──► find the object (OpenCV) ──► where is it?
 
 Water is a miserable surface to do vision on. The sun reflects off it, ripples make the reflections move, and half of what your detector finds is glare.
 
-The pipeline is deliberately simple — HSV colour segmentation, then Hough circles to find round floating objects — but with a lot of preprocessing to kill reflections: median blur, morphological opening, and parameters tuned outdoors rather than at a desk. Parameters that worked perfectly indoors were useless the first time I took it out.
+The pipeline is deliberately simple — HSV colour segmentation, morphological opening, then the centroid of the largest surviving contour — but with parameters tuned outdoors rather than at a desk. Parameters that worked perfectly indoors were useless the first time I took it out.
 
 ---
 
@@ -56,11 +26,11 @@ So I stopped using the model. Instead I moved the arm by hand to a grid of known
 
 ## Simulation
 
-Before touching hardware I modelled the arm in URDF/Xacro and checked reachability, joint limits and planning in MoveIt 2 and Gazebo, using position-only IK since 5 DOF can't satisfy full pose anyway.
+Before touching hardware I modelled the arm in URDF/Xacro and checked reachability, joint limits and planning in MoveIt 2 and Gazebo, using position-only IK, since the arm can't satisfy a full 6-DOF pose anyway.
 
 📹 **[Pick and place in Gazebo](https://drive.google.com/file/d/1Wp98C3db8G3Mc64qr6rZjcL8hFTYX7ZU/view?usp=sharing)**
 
-The simulation setup is in this repo, and it's where the next round of experiments will run.
+The simulation setup is in `simulation/`, and it's where the next round of experiments will run.
 
 ---
 
@@ -94,11 +64,13 @@ The honest section, and the part I learned most from:
 
 Rebuilding the arm to run a proper experiment: how much worse does model-based IK actually get as the hardware drifts from its model, and how many taught points do you need before the teach-grid beats it? Positioning error, repeatability and grasp success, measured properly this time, across teach-grid density and injected model error — in simulation first, then on hardware.
 
-Design files, code and data will go up here as it progresses.
+Code and the simulation setup are here already. Design files and experimental data go up as the rebuild progresses.
 
 ---
 
 ## About the code
+
+`simulation/` holds the URDF, meshes and RViz launch file. `control/` holds the servo driver, the teach-grid recorder and the pick-and-place script.
 
 This is thesis code. It works, but it wasn't written to be read by anyone else. I'm cleaning it up as I go through the rebuild — if something's unclear, ask.
 
