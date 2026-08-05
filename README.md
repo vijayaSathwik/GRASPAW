@@ -1,3 +1,33 @@
+# GRASPAW
+
+A robot arm on a boat that picks trash out of the water.
+
+This was my M.Tech thesis at IIT Hyderabad (2025–2026), supervised by Prof. R. Prashant Kumar. I built the whole thing — the boat, the arm, the vision, the software — and then took it outside and found out what actually breaks.
+
+📹 **[Watch it pick up an object and place it](https://drive.google.com/file/d/19y88qOxWlNAnvGD7hjhhpgPssVoBzQ9n/view?usp=sharing)**
+
+---
+
+## Why bother
+
+Most low-cost cleanup boats drag a net or a conveyor and scoop up whatever floats into them. That works, but it's indiscriminate — you collect everything, including things you'd rather not.
+
+I wanted the boat to *choose*: see a specific object, reach out, and pick that one up. Which sounds like a small change and isn't, because now perception has to talk to a manipulator sitting on a platform that won't hold still.
+
+---
+
+## How it's put together
+
+```
+USB camera ──► find the object (OpenCV) ──► where is it?
+                                                │
+                                                ▼
+                                    work out the joint angles
+                                                │
+                                                ▼
+                    send to servos ──► 5-DOF arm ──► grab it, drop it in the bin
+```
+
 - **Boat:** PVC hull, two brushless thrusters, differential steering, driven over WiFi from an ESP32
 - **Arm:** 3D-printed, four arm joints plus a gripper (five STS3215 smart servos on one serial bus)
 - **Brain:** Raspberry Pi onboard running the vision and interpolation, sending joint targets over USB serial to a microcontroller that drives the Feetech half-duplex bus
